@@ -1,6 +1,29 @@
+require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
+const mongoose = require('mongoose')
 const app = express()
+
+mongoose.set('strictQuery', false)
+
+const url = process.env.MONGODB_URI
+
+mongoose.connect(url)
+
+const personSchema = new mongoose.Schema({
+  name: String,
+  number: String,
+})
+
+personSchema.set('toJSON', {
+  transform: (document, returnedObject) => {
+    returnedObject.id = returnedObject._id.toString()
+    delete returnedObject._id
+    delete returnedObject.__v
+  },
+})
+
+const Person = mongoose.model('Person', personSchema)
 
 app.use(express.static('dist'))
 app.use(express.json())
@@ -11,39 +34,16 @@ morgan.token('body', (request) => {
 
 app.use(morgan(':method :url :status :res[content-length] - :response-time ms :body'))
 
-let persons = [
-  {
-    id: '1',
-    name: 'Arto Hellas',
-    number: '040-123456',
-  },
-  {
-    id: '2',
-    name: 'Ada Lovelace',
-    number: '39-44-5323523',
-  },
-  {
-    id: '3',
-    name: 'Dan Abramov',
-    number: '12-43-234345',
-  },
-  {
-    id: '4',
-    name: 'Mary Poppendieck',
-    number: '39-23-6423122',
-  },
-]
-
-const generateId = () => {
-  return Math.floor(Math.random() * 1000000).toString()
-}
+let persons = []
 
 app.get('/', (request, response) => {
   response.send('<h1>Phonebook Backend</h1>')
 })
 
 app.get('/api/persons', (request, response) => {
-  response.json(persons)
+  Person.find({}).then((persons) => {
+    response.json(persons)
+  })
 })
 
 app.get('/info', (request, response) => {
@@ -88,23 +88,22 @@ app.post('/api/persons', (request, response) => {
     })
   }
 
-  const nameExists = persons.some((person) => person.name === body.name)
+  Person.findOne({ name: body.name }).then((existingPerson) => {
+    if (existingPerson) {
+      return response.status(400).json({
+        error: 'name must be unique',
+      })
+    }
 
-  if (nameExists) {
-    return response.status(400).json({
-      error: 'name must be unique',
+    const person = new Person({
+      name: body.name,
+      number: body.number,
     })
-  }
 
-  const person = {
-    id: generateId(),
-    name: body.name,
-    number: body.number,
-  }
-
-  persons = persons.concat(person)
-
-  response.status(201).json(person)
+    person.save().then((savedPerson) => {
+      response.status(201).json(savedPerson)
+    })
+  })
 })
 
 const PORT = process.env.PORT || 3001
