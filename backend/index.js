@@ -2,6 +2,7 @@ require('dotenv').config()
 const express = require('express')
 const morgan = require('morgan')
 const mongoose = require('mongoose')
+const Person = require('./models/person')
 const app = express()
 
 mongoose.set('strictQuery', false)
@@ -9,21 +10,6 @@ mongoose.set('strictQuery', false)
 const url = process.env.MONGODB_URI
 
 mongoose.connect(url)
-
-const personSchema = new mongoose.Schema({
-  name: String,
-  number: String,
-})
-
-personSchema.set('toJSON', {
-  transform: (document, returnedObject) => {
-    returnedObject.id = returnedObject._id.toString()
-    delete returnedObject._id
-    delete returnedObject.__v
-  },
-})
-
-const Person = mongoose.model('Person', personSchema)
 
 app.use(express.static('dist'))
 app.use(express.json())
@@ -145,6 +131,10 @@ const errorHandler = (error, request, response, next) => {
 
   if (error.name === 'CastError') {
     return response.status(400).send({ error: 'malformatted id' })
+  }
+
+  if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
   }
 
   next(error)
