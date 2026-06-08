@@ -47,6 +47,40 @@ const App = () => {
       number,
     }
 
+    const existingPerson = persons.find((person) => person.name === name)
+
+    if (existingPerson) {
+      const confirmUpdate = window.confirm(
+        `${name} is already added to phonebook, replace the old number with a new one?`
+      )
+
+      if (!confirmUpdate) {
+        return
+      }
+
+      const updatedPerson = { ...existingPerson, number }
+
+      personsService
+        .update(existingPerson.id, updatedPerson)
+        .then((returnedPerson) => {
+          setPersons(
+            persons.map((person) =>
+              person.id === existingPerson.id ? returnedPerson : person
+            )
+          )
+          setNewName('')
+          setNewNumber('')
+          showMessage(`Updated ${returnedPerson.name}`)
+        })
+        .catch((error) => {
+          const errorMessage =
+            error.response?.data?.error || `Could not update ${name}`
+          showMessage(errorMessage, 'error')
+        })
+
+      return
+    }
+
     personsService
       .create(personObject)
       .then((returnedPerson) => {
