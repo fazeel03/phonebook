@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
-    "dev": "node --watch index.js"
+    "dev": "node --watch index.js",
+    "lint": "eslint ."
   },
   "keywords": [],
   "author": "",
@@ -17,5 +18,11 @@
     "express": "^5.2.1",
     "mongoose": "^9.6.3",
     "morgan": "^1.10.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "eslint": "^10.4.1",
+    "globals": "^17.6.0"
   }
 }

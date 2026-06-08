@@ -48,7 +48,7 @@ const run = async () => {
       console.log(`${person.name} ${person.number}`)
     })
   } catch (error) {
-    console.error('could not access the phonebook database')
+    console.error('could not access the phonebook database', error.message)
     process.exitCode = 1
   } finally {
     await mongoose.connection.close()
